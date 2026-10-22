@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  windows:
+    name: Build, test and coverage (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: |
+          dotnet tool restore
+          dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      # Win32 tests create, hide and restore real windows on the runner's desktop.
+      - name: Test
+        run: >
+          dotnet test --no-build -c Release
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults
+          --logger trx
+          --logger "console;verbosity=normal"
+
+      - name: Coverage report
+        if: always()
+        run: >
+          dotnet reportgenerator
+          "-reports:TestResults/**/coverage.cobertura.xml"
+          "-targetdir:coverage"
+          "-reporttypes:Html;MarkdownSummaryGithub;JsonSummary;Badges"
+          "-assemblyfilters:+MonitorSwitch.*;-*.Tests"
+
+      - name: Coverage summary
+        if: always()
+        shell: pwsh
+        run: Get-Content coverage/SummaryGithub.md | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+
+      - name: Enforce coverage thresholds
+        shell: pwsh
+        run: ./build/check-coverage.ps1 -Summary coverage/Summary.json -MinTotal 80 -MinCore 90
+
+      - name: Upload test results and coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-and-coverage
+          path: |
+            TestResults/**/*.trx
+            coverage/
+
+      - name: Publish (smoke)
+        run: dotnet publish src/MonitorSwitch.App -c Release -r win-x64 --self-contained false -o publish
+
+      # MonitorSwitch.exe is a GUI-subsystem exe, so PowerShell would not wait for it on its own.
+      - name: CLI smoke test
+        shell: pwsh
+        run: |
+          foreach ($arg in '--help', '--list') {
+            $p = Start-Process ./publish/MonitorSwitch.exe -ArgumentList $arg -Wait -PassThru -NoNewWindow -RedirectStandardOutput "smoke$arg.txt"
+            Get-Content "smoke$arg.txt"
+            if ($p.ExitCode -ne 0) { throw "MonitorSwitch $arg exited with $($p.ExitCode)" }
+          }
+
+  core-linux:
+    # Core must stay free of Win32: its tests run on Linux too.
+    name: Core is platform-neutral (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Test Core
+        run: dotnet test tests/MonitorSwitch.Core.Tests -c Release

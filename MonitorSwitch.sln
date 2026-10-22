@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9944572F-9566-4A08-86DE-09B7F59E2E18}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonitorSwitch.App", "src\MonitorSwitch.App\MonitorSwitch.App.csproj", "{97F92306-F9C3-4DA3-8A3C-A2CBDE093093}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonitorSwitch.Core", "src\MonitorSwitch.Core\MonitorSwitch.Core.csproj", "{775DB338-C921-4618-808F-75F270BA50A7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonitorSwitch.Win32", "src\MonitorSwitch.Win32\MonitorSwitch.Win32.csproj", "{97A35599-7F81-4139-A531-9D3939908747}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1AB139FB-B685-4D85-B908-2A994B7FB7BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonitorSwitch.Core.Tests", "tests\MonitorSwitch.Core.Tests\MonitorSwitch.Core.Tests.csproj", "{E3A01B18-883B-414F-BE25-07294BFD4A66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonitorSwitch.Win32.Tests", "tests\MonitorSwitch.Win32.Tests\MonitorSwitch.Win32.Tests.csproj", "{A709BEAD-C46F-4D67-9F5A-CE54DFFC15BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowFarm", "tests\WindowFarm\WindowFarm.csproj", "{F51C736C-04CF-4200-9DC7-1A8D87EAC045}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{97F92306-F9C3-4DA3-8A3C-A2CBDE093093}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97F92306-F9C3-4DA3-8A3C-A2CBDE093093}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97F92306-F9C3-4DA3-8A3C-A2CBDE093093}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97F92306-F9C3-4DA3-8A3C-A2CBDE093093}.Release|Any CPU.Build.0 = Release|Any CPU
+		{775DB338-C921-4618-808F-75F270BA50A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{775DB338-C921-4618-808F-75F270BA50A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{775DB338-C921-4618-808F-75F270BA50A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{775DB338-C921-4618-808F-75F270BA50A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97A35599-7F81-4139-A531-9D3939908747}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97A35599-7F81-4139-A531-9D3939908747}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97A35599-7F81-4139-A531-9D3939908747}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97A35599-7F81-4139-A531-9D3939908747}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3A01B18-883B-414F-BE25-07294BFD4A66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3A01B18-883B-414F-BE25-07294BFD4A66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3A01B18-883B-414F-BE25-07294BFD4A66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3A01B18-883B-414F-BE25-07294BFD4A66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A709BEAD-C46F-4D67-9F5A-CE54DFFC15BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A709BEAD-C46F-4D67-9F5A-CE54DFFC15BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A709BEAD-C46F-4D67-9F5A-CE54DFFC15BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A709BEAD-C46F-4D67-9F5A-CE54DFFC15BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F51C736C-04CF-4200-9DC7-1A8D87EAC045}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F51C736C-04CF-4200-9DC7-1A8D87EAC045}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F51C736C-04CF-4200-9DC7-1A8D87EAC045}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F51C736C-04CF-4200-9DC7-1A8D87EAC045}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{97F92306-F9C3-4DA3-8A3C-A2CBDE093093} = {9944572F-9566-4A08-86DE-09B7F59E2E18}
+		{775DB338-C921-4618-808F-75F270BA50A7} = {9944572F-9566-4A08-86DE-09B7F59E2E18}
+		{97A35599-7F81-4139-A531-9D3939908747} = {9944572F-9566-4A08-86DE-09B7F59E2E18}
+		{E3A01B18-883B-414F-BE25-07294BFD4A66} = {1AB139FB-B685-4D85-B908-2A994B7FB7BB}
+		{A709BEAD-C46F-4D67-9F5A-CE54DFFC15BF} = {1AB139FB-B685-4D85-B908-2A994B7FB7BB}
+		{F51C736C-04CF-4200-9DC7-1A8D87EAC045} = {1AB139FB-B685-4D85-B908-2A994B7FB7BB}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(mise exec -- dotnet build:*)",
+      "PowerShell(mise exec -- dotnet test:*)",
+      "PowerShell(mise exec -- dotnet restore:*)",
+      "PowerShell(mise exec -- dotnet reportgenerator:*)",
+      "PowerShell(mise exec -- dotnet run --project src/MonitorSwitch.App -- --list:*)",
+      "PowerShell(git status:*)",
+      "PowerShell(git diff:*)",
+      "PowerShell(git log:*)",
+      "PowerShell(gh run list:*)",
+      "PowerShell(gh run view:*)"
+    ]
+  }
+}

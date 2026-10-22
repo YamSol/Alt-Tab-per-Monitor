@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>MonitorSwitch.App</RootNamespace>
+    <AssemblyName>MonitorSwitch</AssemblyName>
+    <!-- Per-monitor DPI awareness so window and monitor coordinates agree across mixed-DPI setups. -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!--
+      Publish settings (take effect with `dotnet publish -r win-x64`): one self-contained exe, so
+      users need neither admin rights nor an installed .NET runtime; precompiled so the first
+      Alt+Tab after start does not wait for the JIT (criterion 10).
+    -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile Condition="'$(SelfContained)' == 'true'">true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MonitorSwitch.Core\MonitorSwitch.Core.csproj" />
+    <ProjectReference Include="..\MonitorSwitch.Win32\MonitorSwitch.Win32.csproj" />
+  </ItemGroup>
+
+</Project>
