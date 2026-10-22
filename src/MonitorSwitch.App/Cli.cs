@@ -30,7 +30,7 @@ internal static class Cli
             log,
             (uint)Environment.ProcessId);
         var report = controller.RecoverOnStartup();
-        Print(report is null ? "Nothing to restore." : $"Restored: {report}");
+        Print(report is null ? $"Nothing to restore in {AppPaths.DataDirectory}." : $"Restored: {report}");
         return 0;
     }
 

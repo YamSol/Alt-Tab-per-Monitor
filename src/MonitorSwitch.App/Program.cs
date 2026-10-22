@@ -5,68 +5,91 @@ namespace MonitorSwitch.App;
 
 internal static class Program
 {
-    private const string Usage = """
-        MonitorSwitch - Alt+Tab limited to the monitor under the cursor.
-
-        Usage: MonitorSwitch.exe [option]
-
-          (no option)   Run in the system tray.
-          --list        Print the windows of each monitor and what would be hidden, then exit.
-          --list-all    Same as --list, including windows ignored by the rules.
-          --restore     Restore windows left hidden by a previous run, then exit.
-          --help        Show this help.
-
-        Data: %LOCALAPPDATA%\MonitorSwitch (settings.json, state.json, monitorswitch.log)
-        """;
-
     [STAThread]
     private static int Main(string[] args)
     {
-        ApplicationConfiguration.Initialize();
-        var log = new FileLog(FileLog.DefaultPath);
-        var option = args.FirstOrDefault()?.ToLowerInvariant();
+        var cli = CommandLine.Parse(args);
+        AppPaths.UseDataDirectory(cli.DataDirectory);
+        var log = new FileLog(FileLog.DefaultPath, cli.Verbose);
 
-        switch (option)
+        if (cli.Error is not null)
         {
-            case null:
-                return RunTray(log);
-            case "--list" or "--list-all":
-                return Cli.List(log, includeIgnored: option == "--list-all");
-            case "--restore":
+            Cli.Print($"{cli.Error}{Environment.NewLine}{Environment.NewLine}{CommandLine.Usage}");
+            return 2;
+        }
+
+        ApplicationConfiguration.Initialize();
+        switch (cli.Command)
+        {
+            case Command.Tray:
+                return RunTray(log, cli.Verbose);
+            case Command.List or Command.ListAll:
+                return Cli.List(log, includeIgnored: cli.Command == Command.ListAll);
+            case Command.Restore:
                 return Cli.Restore(log);
             default:
-                Cli.Print(Usage);
-                return option is "--help" or "-h" or "/?" ? 0 : 2;
+                Cli.Print(CommandLine.Usage);
+                return 0;
         }
     }
 
-    private static int RunTray(ILog log)
+    private static int RunTray(FileLog log, bool verboseFromCommandLine)
     {
-        using var mutex = new Mutex(initiallyOwned: true, @"Local\MonitorSwitch", out var isFirstInstance);
+        // WinForms only accepts this before the first control exists on the thread, i.e. before
+        // TrayApp creates its tray icon. Getting the order wrong crashed v0.1.0 at startup.
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+        TrayApp? app = null;
+        Application.ThreadException += (_, e) => OnCrash(log, app, e.Exception);
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => OnCrash(log, app, e.ExceptionObject as Exception);
+
+        using var mutex = new Mutex(initiallyOwned: true, AppPaths.InstanceMutexName, out var isFirstInstance);
         if (!isFirstInstance)
         {
+            log.Info("Another instance is already running; exiting.");
             MessageBox.Show("MonitorSwitch is already running.", "MonitorSwitch", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return 1;
         }
 
-        using var app = new TrayApp(log);
-        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
-        Application.ThreadException += (_, e) => app.Crash(e.Exception);
-        AppDomain.CurrentDomain.UnhandledException += (_, e) => app.Crash(e.ExceptionObject as Exception);
-        AppDomain.CurrentDomain.ProcessExit += (_, _) => app.RestoreAll("process exit");
-
-        // Started from a terminal: Ctrl+C there restores and exits (RF7).
-        if (ConsoleAttach.ToParent())
+        try
         {
-            Console.CancelKeyPress += (_, e) =>
-            {
-                e.Cancel = true;
-                app.RestoreAll("Ctrl+C");
-                app.ExitThreadSafe();
-            };
+            app = new TrayApp(log, verboseFromCommandLine);
+        }
+        catch (Exception ex)
+        {
+            log.Error("Startup failed.", ex);
+            MessageBox.Show(
+                $"MonitorSwitch could not start:{Environment.NewLine}{ex.Message}{Environment.NewLine}{Environment.NewLine}Details: {log.FilePath}",
+                "MonitorSwitch",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            return 1;
         }
 
-        Application.Run(app);
+        using (app)
+        {
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => app.RestoreAll("process exit");
+
+            // Started from a terminal: Ctrl+C there restores and exits (RF7).
+            if (ConsoleAttach.ToParent())
+            {
+                Console.CancelKeyPress += (_, e) =>
+                {
+                    e.Cancel = true;
+                    app.RestoreAll("Ctrl+C");
+                    app.ExitThreadSafe();
+                };
+            }
+
+            Application.Run(app);
+        }
+
+        log.Info("Exited.");
         return 0;
+    }
+
+    private static void OnCrash(ILog log, TrayApp? app, Exception? exception)
+    {
+        log.Error("Unhandled exception; restoring windows.", exception);
+        app?.RestoreAll("crash");
     }
 }

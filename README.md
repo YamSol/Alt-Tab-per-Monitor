@@ -52,6 +52,7 @@ It doesn't replace the switcher. When you press Alt+Tab it briefly hides the win
 | **Exclusions...** | Process names that are never hidden, one per line (e.g. `vlc.exe`). Use this for apps that pause or misbehave when hidden. |
 | **Restore all windows** | Brings back everything the tool hid. Same as the emergency hotkey. |
 | **Open data folder** | Settings, log and snapshot. |
+| **Verbose log** | Logs every switch and every window decision. See [Troubleshooting](#troubleshooting). |
 
 ### Keys
 
@@ -68,6 +69,10 @@ MonitorSwitch.exe              # run in the tray
 MonitorSwitch.exe --list       # print each monitor's windows and what would be hidden
 MonitorSwitch.exe --list-all   # same, including windows the rules ignore
 MonitorSwitch.exe --restore    # restore windows left hidden by a previous run
+
+# options, combine with any of the above
+--verbose                      # detailed log for this run
+--data-dir <folder>            # settings, log and snapshot in <folder> (portable / side-by-side copy)
 ```
 
 ### Settings
@@ -83,11 +88,19 @@ MonitorSwitch.exe --restore    # restore windows left hidden by a previous run
   "OwnedFollowsOwner": true,                // hide a dialog together with its hidden owner
   "DeferFirstTab": true,                    // hide before the switcher draws (see below)
   "HideTimeoutMs": 100,
-  "RestoreDelayMs": 250
+  "RestoreDelayMs": 250,
+  "VerboseLog": false                       // same as the tray's "Verbose log"
 }
 ```
 
 The same folder holds `monitorswitch.log` (handles and process names only, never window titles or keystrokes) and, while windows are hidden, `state.json`.
+
+### Troubleshooting
+
+- **Check the log first.** `monitorswitch.log` records every startup step (version, data folder, monitors, hotkey, keyboard hook, `Ready in N ms`) and every error with its stack trace. If the last line is not `Ready`, the step after the last line is the one that failed.
+- **Turn on verbose logging** (tray → **Verbose log**, or start with `--verbose`) to see every Alt+Tab: when it began, whether Tab was held back and re-sent, which windows were hidden or kept and why, how each one was restored, and which window got focus.
+- **The process disappears with nothing in the log**: look in *Event Viewer → Windows Logs → Application* for a `.NET Runtime` error (event 1026) naming `MonitorSwitch.exe`. It contains the exception.
+- **Windows stuck hidden**: press the emergency hotkey, use **Restore all windows**, or run `MonitorSwitch.exe --restore`.
 
 ## How it works
 

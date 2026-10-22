@@ -39,6 +39,12 @@ jobs:
           dotnet publish src/MonitorSwitch.App -c Release -r win-x64 --self-contained true  -p:Version=$v -o out/self-contained
           dotnet publish src/MonitorSwitch.App -c Release -r win-x64 --self-contained false -p:Version=$v -o out/framework-dependent
 
+      - name: Tray smoke test (both flavours)
+        shell: pwsh
+        run: |
+          ./build/smoke-tray.ps1 -Exe out/self-contained/MonitorSwitch.exe
+          ./build/smoke-tray.ps1 -Exe out/framework-dependent/MonitorSwitch.exe
+
       - name: Package
         shell: pwsh
         run: |

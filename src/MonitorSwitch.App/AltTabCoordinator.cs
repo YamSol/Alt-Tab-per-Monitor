@@ -68,7 +68,7 @@ internal sealed class AltTabCoordinator : IDisposable
                 _ui.Post(_ => OnCommit(), null);
                 break;
             case KeyAction.Cancel:
-                _ui.Post(_ => _controller.Cancel(), null);
+                _ui.Post(_ => OnCancel(), null);
                 break;
         }
 
@@ -77,8 +77,10 @@ internal sealed class AltTabCoordinator : IDisposable
 
     private void OnBegin(bool tabWasSwallowed, bool reverse)
     {
+        _log.Debug($"Alt+{(reverse ? "Shift+" : "")}Tab: begin (first Tab {(tabWasSwallowed ? "held back" : "passed through")}).");
         if (_commitPending)
         {
+            _log.Debug("Previous switch still pending; finishing it first.");
             FinishCommit();
         }
 
@@ -94,7 +96,9 @@ internal sealed class AltTabCoordinator : IDisposable
         {
             if (tabWasSwallowed)
             {
+                var altHeld = KeyInjector.IsAltHeld();
                 KeyInjector.ReplayTab(reverse);
+                _log.Debug(altHeld ? "Re-sent Tab (Alt still held)." : "Alt already released: replayed the whole Alt+Tab.");
             }
         }
     }
@@ -103,6 +107,7 @@ internal sealed class AltTabCoordinator : IDisposable
     {
         if (!_controller.IsSwitching)
         {
+            _log.Debug("Alt released: nothing hidden, nothing to restore.");
             return;
         }
 
@@ -110,12 +115,20 @@ internal sealed class AltTabCoordinator : IDisposable
         _chosen = WindowHandle.Null;
         _commitTimer.Interval = Math.Max(1, _settings().RestoreDelayMs);
         _commitTimer.Start();
+        _log.Debug($"Alt released: waiting up to {_commitTimer.Interval} ms for the switch to land.");
+    }
+
+    private void OnCancel()
+    {
+        _log.Debug("Esc: cancel.");
+        _controller.Cancel();
     }
 
     private void OnForeground(WindowHandle window)
     {
         if (_commitPending)
         {
+            _log.Debug($"Foreground changed to {window}.");
             _chosen = window;
             FinishCommit();
         }
@@ -130,6 +143,11 @@ internal sealed class AltTabCoordinator : IDisposable
         }
 
         _commitPending = false;
+        if (_chosen.IsNull)
+        {
+            _log.Debug("No foreground change before the timeout; using the current foreground window.");
+        }
+
         var chosen = _chosen.IsNull ? _windows.GetForegroundWindow() : _chosen;
         _controller.Commit(chosen);
     }

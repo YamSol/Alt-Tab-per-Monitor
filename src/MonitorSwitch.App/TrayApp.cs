@@ -9,7 +9,8 @@ namespace MonitorSwitch.App;
 /// <summary>Tray icon, settings and lifetime (RF7, RF8). Everything here runs on the UI thread.</summary>
 internal sealed class TrayApp : ApplicationContext
 {
-    private readonly ILog _log;
+    private readonly FileLog _log;
+    private readonly bool _verboseFromCommandLine;
     private readonly SettingsStore _settingsStore;
     private readonly VirtualDesktops _desktops = new();
     private readonly Win32WindowSystem _windows;
@@ -23,13 +24,26 @@ internal sealed class TrayApp : ApplicationContext
     private ToolStripMenuItem _viewOnlyItem = null!;
     private ToolStripMenuItem _activeItem = null!;
     private ToolStripMenuItem _restoreItem = null!;
+    private ToolStripMenuItem _verboseItem = null!;
 
-    public TrayApp(ILog log)
+    public TrayApp(FileLog log, bool verboseFromCommandLine)
     {
+        var started = Stopwatch.GetTimestamp();
         _log = log;
+        _verboseFromCommandLine = verboseFromCommandLine;
         _ui = SynchronizationContext.Current ?? new WindowsFormsSynchronizationContext();
         _settingsStore = new SettingsStore(SettingsStore.DefaultPath, log);
         _settings = _settingsStore.Load();
+        _log.Verbose = verboseFromCommandLine || _settings.VerboseLog;
+
+        _log.Info(
+            $"Starting MonitorSwitch {Application.ProductVersion} (pid {Environment.ProcessId}, .NET {Environment.Version}, " +
+            $"{System.Runtime.InteropServices.RuntimeInformation.OSDescription}) from {Environment.ProcessPath}.");
+        _log.Info(
+            $"Data folder {AppPaths.DataDirectory}. Enabled={_settings.Enabled}, Mode={_settings.Mode}, " +
+            $"Exclusions={_settings.ExcludedProcesses.Count}, Verbose={_log.Verbose}, " +
+            $"virtual desktops {(_desktops.IsAvailable ? "available" : "unavailable")}.");
+
         _windows = new Win32WindowSystem(_desktops);
         _controller = new SwitchController(
             _windows,
@@ -37,10 +51,11 @@ internal sealed class TrayApp : ApplicationContext
             () => _settings,
             log,
             (uint)Environment.ProcessId);
+        LogMonitors();
 
-        _log.Info($"Starting. Mode={_settings.Mode}, virtual desktops {(_desktops.IsAvailable ? "available" : "unavailable")}.");
         _tray = new NotifyIcon { Icon = CreateIcon(), Visible = true, ContextMenuStrip = BuildMenu() };
         _tray.DoubleClick += (_, _) => ShowPlan();
+        _log.Debug("Tray icon created.");
 
         // RF7: a previous run may have died with windows hidden.
         if (_controller.RecoverOnStartup() is { } recovered)
@@ -54,8 +69,10 @@ internal sealed class TrayApp : ApplicationContext
 
         _coordinator = new AltTabCoordinator(_controller, _windows, () => _settings, log, OnHookFailure);
         _coordinator.Start();
+        _log.Info("Keyboard hook installed.");
         RefreshMenu();
         _controller.WarmUp();
+        _log.Info($"Ready in {Stopwatch.GetElapsedTime(started).TotalMilliseconds:F0} ms.");
     }
 
     /// <summary>Restore everything the tool hid. Safe from any thread, and safe to call twice.</summary>
@@ -74,16 +91,11 @@ internal sealed class TrayApp : ApplicationContext
         }
     }
 
-    public void Crash(Exception? ex)
-    {
-        _log.Error("Unhandled exception; restoring windows.", ex);
-        RestoreAll("crash");
-    }
-
     public void ExitThreadSafe() => _ui.Post(_ => ExitThread(), null);
 
     protected override void ExitThreadCore()
     {
+        _log.Info("Exiting.");
         RestoreAll("exit");
         _tray.Visible = false;
         base.ExitThreadCore();
@@ -121,6 +133,8 @@ internal sealed class TrayApp : ApplicationContext
         _restoreItem = new ToolStripMenuItem("Restore all windows", null, (_, _) => RestoreAll("menu"));
         menu.Items.Add(_restoreItem);
         menu.Items.Add(new ToolStripMenuItem("Open data folder", null, (_, _) => OpenDataFolder()));
+        _verboseItem = new ToolStripMenuItem("Verbose log", null, (_, _) => Update(_settings with { VerboseLog = !_settings.VerboseLog }));
+        menu.Items.Add(_verboseItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Exit", null, (_, _) => ExitThread()));
         return menu;
@@ -132,6 +146,7 @@ internal sealed class TrayApp : ApplicationContext
         _viewOnlyItem.Checked = _settings.Mode == OperationMode.ViewOnly;
         _activeItem.Checked = _settings.Mode == OperationMode.Active;
         _restoreItem.ShortcutKeyDisplayString = _settings.EmergencyHotkey;
+        _verboseItem.Checked = _log.Verbose;
         var state = !_settings.Enabled ? "disabled" : _settings.Mode == OperationMode.ViewOnly ? "view only" : "active";
         _tray.Text = $"MonitorSwitch ({state})";
     }
@@ -141,7 +156,10 @@ internal sealed class TrayApp : ApplicationContext
         var hotkeyChanged = settings.EmergencyHotkey != _settings.EmergencyHotkey;
         _settings = settings;
         _settingsStore.Save(settings);
-        _log.Info($"Settings changed: Enabled={settings.Enabled}, Mode={settings.Mode}, Exclusions={settings.ExcludedProcesses.Count}.");
+        _log.Verbose = _verboseFromCommandLine || settings.VerboseLog;
+        _log.Info(
+            $"Settings changed: Enabled={settings.Enabled}, Mode={settings.Mode}, " +
+            $"Exclusions={settings.ExcludedProcesses.Count}, Verbose={_log.Verbose}.");
         if (hotkeyChanged)
         {
             RegisterHotkey();
@@ -156,6 +174,19 @@ internal sealed class TrayApp : ApplicationContext
         {
             _log.Warn($"Emergency hotkey '{_settings.EmergencyHotkey}' is invalid or taken.");
             Notify($"Could not register emergency hotkey {_settings.EmergencyHotkey}. Use the tray menu to restore windows.");
+            return;
+        }
+
+        _log.Info($"Emergency hotkey {_settings.EmergencyHotkey} registered.");
+    }
+
+    private void LogMonitors()
+    {
+        var monitors = _windows.GetMonitors();
+        _log.Info($"{monitors.Count} monitor(s).");
+        foreach (var monitor in monitors)
+        {
+            _log.Debug($"  {monitor.Handle} {monitor.DeviceName} {monitor.Bounds}{(monitor.IsPrimary ? " primary" : "")}");
         }
     }
 

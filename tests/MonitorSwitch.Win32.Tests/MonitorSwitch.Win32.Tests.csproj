@@ -30,6 +30,8 @@
     <ProjectReference Include="..\..\src\MonitorSwitch.Win32\MonitorSwitch.Win32.csproj" />
     <!-- Built and copied next to the tests; launched as separate processes by the latency test. -->
     <ProjectReference Include="..\WindowFarm\WindowFarm.csproj" />
+    <!-- The tray exe itself, started by TrayStartupTests. -->
+    <ProjectReference Include="..\..\src\MonitorSwitch.App\MonitorSwitch.App.csproj" />
   </ItemGroup>
 
 </Project>

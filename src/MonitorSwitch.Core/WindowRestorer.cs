@@ -49,6 +49,10 @@ public sealed class WindowRestorer
             {
                 _log.Warn($"Could not restore {entry.Handle} ({entry.ProcessName}).");
             }
+            else
+            {
+                _log.Debug($"  {outcome} {entry.Handle} {entry.ProcessName} state={entry.Placement.ShowCommand}");
+            }
         }
 
         return new RestoreReport(results);

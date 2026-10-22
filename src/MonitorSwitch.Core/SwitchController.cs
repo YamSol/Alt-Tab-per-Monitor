@@ -84,6 +84,7 @@ public sealed class SwitchController
             var plan = Preview();
             var toHide = plan.ToHide;
             var planned = Stopwatch.GetElapsedTime(started);
+            LogPlan(plan, settings.Mode);
 
             if (settings.Mode == OperationMode.ViewOnly)
             {
@@ -150,7 +151,15 @@ public sealed class SwitchController
             }
 
             var report = RestoreActive();
-            if (!chosen.IsNull && !_windows.Focus(chosen))
+            if (chosen.IsNull)
+            {
+                _log.Debug("No chosen window to focus.");
+            }
+            else if (_windows.Focus(chosen))
+            {
+                _log.Debug($"Focused {chosen}.");
+            }
+            else
             {
                 _log.Warn($"Could not focus {chosen}.");
             }
@@ -191,6 +200,19 @@ public sealed class SwitchController
         lock (_gate)
         {
             return RecoverFromDisk();
+        }
+    }
+
+    /// <summary>Verbose: one line per visible window with the rule that decided it.</summary>
+    private void LogPlan(HidePlan plan, OperationMode mode)
+    {
+        var visible = plan.Items.Where(c => c.Reason is not (Reason.AlreadyHidden or Reason.Child)).ToList();
+        _log.Debug($"Plan ({mode}): cursor on monitor {plan.CurrentMonitor}, {visible.Count} visible windows, {plan.ToHide.Count} to hide.");
+        foreach (var item in visible)
+        {
+            var w = item.Window;
+            var owner = w.IsOwned ? $" owner={w.Owner}" : "";
+            _log.Debug($"  {(item.Hide ? "hide" : "keep")} {w.Handle} {w.ProcessName} monitor={w.Monitor}{owner} state={w.Placement.ShowCommand} reason={item.Reason}");
         }
     }
 

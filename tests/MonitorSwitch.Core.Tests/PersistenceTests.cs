@@ -156,16 +156,92 @@ public sealed class PersistenceTests : IDisposable
         log.Error("third", new InvalidOperationException("why"));
 
         var lines = File.ReadAllLines(log.FilePath);
-        Assert.Equal(3, lines.Length);
+        Assert.Equal(4, lines.Length);
         Assert.Contains("INFO first", lines[0]);
         Assert.Contains("WARN second", lines[1]);
-        Assert.Contains("ERROR third InvalidOperationException: why", lines[2]);
+        Assert.EndsWith("ERROR third", lines[2]);
+        Assert.Equal("System.InvalidOperationException: why", lines[3]);
 
         File.WriteAllText(log.FilePath, new string('x', (int)FileLog.MaxBytes + 1));
         log.Info("after roll");
 
         Assert.True(File.Exists(log.FilePath + ".1"));
         Assert.Single(File.ReadAllLines(log.FilePath));
+    }
+
+    [Fact]
+    public void File_log_writes_debug_only_when_verbose_and_keeps_stack_traces()
+    {
+        var log = new FileLog(_temp.File("verbose.log"));
+        log.Debug("hidden");
+        log.Verbose = true;
+        log.Debug("shown");
+        try
+        {
+            throw new InvalidOperationException("why");
+        }
+        catch (InvalidOperationException ex)
+        {
+            log.Error("failed", ex);
+        }
+
+        var text = File.ReadAllText(log.FilePath);
+        Assert.DoesNotContain("hidden", text);
+        Assert.Contains("DEBUG shown", text);
+        Assert.Contains("at MonitorSwitch.Core.Tests.PersistenceTests", text);
+    }
+
+    [Fact]
+    public void Plan_and_restore_are_logged_in_detail_without_titles()
+    {
+        var desktop = new FakeWindowSystem();
+        desktop.Add(1, FakeWindowSystem.Left, title: "Here");
+        desktop.Add(2, FakeWindowSystem.Right, title: "Secret", process: "word.exe");
+        var log = new MemoryLog();
+        var controller = new SwitchController(
+            desktop, new SnapshotStore(_temp.File("state.json"), log), () => new AppSettings { Mode = OperationMode.Active }, log, 0);
+
+        controller.Begin();
+        controller.Commit(new WindowHandle(1));
+
+        Assert.Contains(log.Lines, l => l.StartsWith("DEBUG Plan (Active)") && l.Contains("1 to hide"));
+        Assert.Contains(log.Lines, l => l == "DEBUG   hide 0x2 word.exe monitor=0x2 state=Normal reason=OtherMonitor");
+        Assert.Contains(log.Lines, l => l == "DEBUG   Restored 0x2 word.exe state=Normal");
+        Assert.Contains(log.Lines, l => l == "DEBUG Focused 0x1.");
+        Assert.DoesNotContain(log.Lines, l => l.Contains("Secret"));
+    }
+
+    [Fact]
+    public void Settings_keep_verbose_log()
+    {
+        var store = new SettingsStore(_temp.File("settings.json"), _log);
+
+        store.Save(new AppSettings { VerboseLog = true });
+
+        Assert.True(store.Load().VerboseLog);
+        Assert.False(new AppSettings().VerboseLog);
+    }
+
+    [Fact]
+    public void Data_directory_can_be_overridden_with_its_own_instance_name()
+    {
+        // Process-wide state: restore the default even if an assertion fails.
+        try
+        {
+            Assert.Equal(@"Local\MonitorSwitch", AppPaths.InstanceMutexName);
+
+            AppPaths.UseDataDirectory(_temp.Path);
+
+            Assert.Equal(Path.GetFullPath(_temp.Path), AppPaths.DataDirectory);
+            Assert.StartsWith(@"Local\MonitorSwitch-", AppPaths.InstanceMutexName);
+            Assert.Equal(Path.Combine(_temp.Path, "state.json"), SnapshotStore.DefaultPath);
+        }
+        finally
+        {
+            AppPaths.UseDataDirectory(null);
+        }
+
+        Assert.Equal(AppPaths.DefaultDataDirectory, AppPaths.DataDirectory);
     }
 
     [Fact]

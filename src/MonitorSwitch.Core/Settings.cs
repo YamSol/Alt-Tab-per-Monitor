@@ -40,6 +40,9 @@ public sealed record AppSettings
     /// <summary>Upper bound to wait, after Alt is released, for the system to activate the chosen window.</summary>
     public int RestoreDelayMs { get; init; } = 250;
 
+    /// <summary>Log every switch and every window decision (handles and process names, never titles).</summary>
+    public bool VerboseLog { get; init; }
+
     public ClassifierOptions ToClassifierOptions(uint selfProcessId) => new()
     {
         ExcludedProcesses = ExcludedProcesses,

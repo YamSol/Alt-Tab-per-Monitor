@@ -5,6 +5,9 @@ namespace MonitorSwitch.Core;
 /// </summary>
 public interface ILog
 {
+    /// <summary>Step-by-step detail (every switch, every window decision). Written only in verbose mode.</summary>
+    void Debug(string message);
+
     void Info(string message);
 
     void Warn(string message);
@@ -19,21 +22,34 @@ public sealed class FileLog : ILog
 
     private readonly object _gate = new();
 
-    public FileLog(string path)
+    public FileLog(string path, bool verbose = false)
     {
         FilePath = path;
+        Verbose = verbose;
     }
 
     public string FilePath { get; }
 
+    /// <summary>Writes <see cref="Debug"/> lines too. Can change at run time (tray menu).</summary>
+    public bool Verbose { get; set; }
+
     public static string DefaultPath => Path.Combine(AppPaths.DataDirectory, "monitorswitch.log");
+
+    public void Debug(string message)
+    {
+        if (Verbose)
+        {
+            Write("DEBUG", message);
+        }
+    }
 
     public void Info(string message) => Write("INFO", message);
 
     public void Warn(string message) => Write("WARN", message);
 
+    // Full exception text, stack trace included: a crash must be diagnosable from the log alone.
     public void Error(string message, Exception? exception = null) =>
-        Write("ERROR", exception is null ? message : $"{message} {exception.GetType().Name}: {exception.Message}");
+        Write("ERROR", exception is null ? message : $"{message}{Environment.NewLine}{exception}");
 
     private void Write(string level, string message)
     {
@@ -61,7 +77,7 @@ public sealed class FileLog : ILog
     }
 }
 
-/// <summary>In-memory log, used by tests and by the "list windows" view.</summary>
+/// <summary>In-memory log that keeps every level, used by tests.</summary>
 public sealed class MemoryLog : ILog
 {
     private readonly List<string> _lines = [];
@@ -76,6 +92,8 @@ public sealed class MemoryLog : ILog
             }
         }
     }
+
+    public void Debug(string message) => Add("DEBUG", message);
 
     public void Info(string message) => Add("INFO", message);
 
