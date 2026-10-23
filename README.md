@@ -8,7 +8,6 @@
 [![Release](https://img.shields.io/github/v/release/YamSol/Alt-Tab-per-Monitor?include_prereleases)](https://github.com/YamSol/Alt-Tab-per-Monitor/releases)
 ![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6)
 ![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
-![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
 
 [Overview](#overview) • [Getting started](#getting-started) • [Usage](#usage) • [How it works](#how-it-works) • [Development](#development)
 
