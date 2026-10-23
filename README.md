@@ -67,6 +67,7 @@ It doesn't replace the switcher. When you press Alt+Tab it briefly hides the win
 | --- | --- |
 | <kbd>Alt</kbd>+<kbd>Tab</kbd> / <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> | System switcher, current monitor only. |
 | <kbd>Esc</kbd> while switching | Cancel: everything restored, focus unchanged. |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Tab</kbd> | Ignored by MonitorSwitch: the classic sticky switcher with the windows of **all** monitors. |
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F12</kbd> | Emergency restore (configurable). |
 
 ### Command line
