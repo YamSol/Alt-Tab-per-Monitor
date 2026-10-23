@@ -20,7 +20,9 @@ $log = Join-Path $dataDir 'monitorswitch.log'
 New-Item -ItemType Directory -Force $dataDir | Out-Null
 Set-Content -Encoding utf8 -Path (Join-Path $dataDir 'settings.json') -Value '{ "Mode": "ViewOnly" }'
 
-$process = Start-Process -FilePath $Exe -ArgumentList '--verbose', '--data-dir', $dataDir -PassThru
+# The CLR writes fail-fast reasons and stacks to stderr; a GUI exe's stderr is otherwise lost.
+$stderr = Join-Path ([IO.Path]::GetTempPath()) ("monitorswitch-smoke-stderr-" + [guid]::NewGuid().ToString('N') + '.txt')
+$process = Start-Process -FilePath $Exe -ArgumentList '--verbose', '--data-dir', $dataDir -PassThru -RedirectStandardError $stderr
 
 try {
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
@@ -33,6 +35,8 @@ try {
     if (Test-Path $log) { Get-Content $log }
 
     if ($process.HasExited) {
+        if ((Test-Path $stderr) -and (Get-Item $stderr).Length -gt 0) { '---- stderr'; Get-Content $stderr }
+
         # A crash before the first log line (runtime/host level) only shows up in the event log.
         Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-5) } -ErrorAction SilentlyContinue |
             Where-Object { $_.ProviderName -in '.NET Runtime', 'Application Error', 'Windows Error Reporting' } |
@@ -47,4 +51,5 @@ try {
 finally {
     if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force }
     Remove-Item -Recurse -Force $dataDir -ErrorAction SilentlyContinue
+    Remove-Item -Force $stderr -ErrorAction SilentlyContinue
 }
