@@ -20,6 +20,15 @@
     <EnableCompressionInSingleFile Condition="'$(SelfContained)' == 'true'">true</EnableCompressionInSingleFile>
   </PropertyGroup>
 
+  <!--
+    Both release flavours are published from one checkout. When they share obj/ and bin/, each
+    publish reuses the other's stale output and the exe fail-fasts on start (0xC0000602).
+  -->
+  <PropertyGroup Condition="'$(SelfContained)' == 'true'">
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)\self-contained\</IntermediateOutputPath>
+    <OutputPath>$(BaseOutputPath)$(Configuration)\self-contained\</OutputPath>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\MonitorSwitch.Core\MonitorSwitch.Core.csproj" />
     <ProjectReference Include="..\MonitorSwitch.Win32\MonitorSwitch.Win32.csproj" />

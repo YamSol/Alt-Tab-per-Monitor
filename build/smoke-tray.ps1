@@ -23,6 +23,7 @@ Set-Content -Encoding utf8 -Path (Join-Path $dataDir 'settings.json') -Value '{ 
 # The CLR writes fail-fast reasons and stacks to stderr; a GUI exe's stderr is otherwise lost.
 $stderr = Join-Path ([IO.Path]::GetTempPath()) ("monitorswitch-smoke-stderr-" + [guid]::NewGuid().ToString('N') + '.txt')
 $process = Start-Process -FilePath $Exe -ArgumentList '--verbose', '--data-dir', $dataDir -PassThru -RedirectStandardError $stderr
+$null = $process.Handle  # without an open handle, ExitCode reads empty after the process exits
 
 try {
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)

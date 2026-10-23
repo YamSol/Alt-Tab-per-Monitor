@@ -36,6 +36,7 @@ Coverage gate (CI): `build/check-coverage.ps1`. Core ≥ 90% lines, total ≥ 80
 - `IsWindowOnCurrentVirtualDesktop` says "other desktop" for a few ms after a window is shown. The fast path trusts `DWMWA_CLOAKED` instead ([decision 0002](docs/decisions/0002-enumerate-on-trigger.md)).
 - `MonitorSwitch.exe` is a GUI-subsystem exe: PowerShell does not wait for it. Use `Start-Process -Wait -PassThru` to get the exit code.
 - WinForms rejects `Application.SetUnhandledExceptionMode` once any control exists on the thread. v0.1.0 crashed on every start because of this. `Program.RunTray` keeps it, and the crash handlers, ahead of `new TrayApp`. `TrayStartupTests` (real exe) and `build/smoke-tray.ps1` (published exe, CI and release) catch a tray that cannot start.
+- The self-contained publish uses its own `obj/` and `bin/` (`MonitorSwitch.App.csproj`). If the two flavours share them, whichever publishes second reuses stale output and fail-fasts on start (0xC0000602, no log written).
 - Logging: lifecycle and errors at Info/Error; per-switch detail at `Debug`, written only when verbose. A new step in the switch flow gets a `Debug` line.
 - Win32 tests must go through `ScopedWindowSystem`, so only the test's own windows can ever be hidden on a developer machine.
 
