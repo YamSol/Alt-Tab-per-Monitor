@@ -2,7 +2,7 @@
 
 Automated tests cover the logic (Core) and real window behaviour (Win32). What they cannot do is press physical keys in front of the system switcher on two physical monitors. Run this checklist on a two-monitor machine before tagging a release.
 
-Setup: build or download `MonitorSwitch.exe` and start it. In the tray menu choose **Mode → Active**. Keep `%LOCALAPPDATA%\MonitorSwitch\monitorswitch.log` open in a tail (`Get-Content -Wait`).
+Setup: build or download `MonitorSwitch.exe` and start it. The tray menu's first line must read **MonitorSwitch: active** (the default). Keep `%LOCALAPPDATA%\MonitorSwitch\monitorswitch.log` open in a tail (`Get-Content -Wait`).
 
 | # | Spec criterion | Steps | Pass when |
 | --- | --- | --- | --- |

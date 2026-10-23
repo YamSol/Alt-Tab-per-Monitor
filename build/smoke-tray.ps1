@@ -15,6 +15,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $dataDir = Join-Path ([IO.Path]::GetTempPath()) ("monitorswitch-smoke-" + [guid]::NewGuid().ToString('N'))
 $log = Join-Path $dataDir 'monitorswitch.log'
+
+# Active is the default; on a developer machine a real Alt+Tab during the smoke run must hide nothing.
+New-Item -ItemType Directory -Force $dataDir | Out-Null
+Set-Content -Encoding utf8 -Path (Join-Path $dataDir 'settings.json') -Value '{ "Mode": "ViewOnly" }'
+
 $process = Start-Process -FilePath $Exe -ArgumentList '--verbose', '--data-dir', $dataDir -PassThru
 
 try {

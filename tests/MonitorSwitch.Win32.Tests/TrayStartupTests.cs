@@ -28,6 +28,10 @@ public sealed class TrayStartupTests : IDisposable
     [Fact]
     public void Tray_starts_stays_up_and_logs_its_startup()
     {
+        // Active is the default; a real Alt+Tab by the developer during the test must hide nothing.
+        Directory.CreateDirectory(_dataDir);
+        File.WriteAllText(Path.Combine(_dataDir, "settings.json"), """{ "Mode": "ViewOnly" }""");
+
         using var process = Process.Start(Exe, ["--verbose", "--data-dir", _dataDir]);
         try
         {
@@ -38,6 +42,7 @@ public sealed class TrayStartupTests : IDisposable
             var log = ReadLog();
             Assert.DoesNotContain("ERROR", log);
             Assert.Contains("Keyboard hook installed.", log);
+            Assert.Contains("Mode=ViewOnly", log);
             Assert.Contains("DEBUG", log);
         }
         finally

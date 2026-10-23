@@ -16,8 +16,11 @@ public sealed record AppSettings
 {
     public bool Enabled { get; init; } = true;
 
-    /// <summary>View-only is the default until the user has checked the plan on their machine.</summary>
-    public OperationMode Mode { get; init; } = OperationMode.ViewOnly;
+    /// <summary>
+    /// Active by default: a fresh install should do what it says. View-only stays one click away
+    /// for checking the plan first (docs/decisions/0004).
+    /// </summary>
+    public OperationMode Mode { get; init; } = OperationMode.Active;
 
     /// <summary>Starts empty (spec §7 question 3); add apps that misbehave under <c>SW_HIDE</c>.</summary>
     public IReadOnlyList<string> ExcludedProcesses { get; init; } = [];

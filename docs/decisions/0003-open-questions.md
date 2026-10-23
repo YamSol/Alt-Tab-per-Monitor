@@ -17,4 +17,4 @@ The visible frame is an ordinary top-level window, and hiding it hides the app. 
 
 ## 3. Exclusion list: starts empty
 
-`ExcludedProcesses = []`. View-only is the default mode. Use the tray's "Show current plan..." or `--list`, plus the log, to find apps that misbehave under `SW_HIDE` before you switch to Active. Then add them via the tray's "Exclusions...".
+`ExcludedProcesses = []`. To find apps that misbehave under `SW_HIDE`, use view-only mode, the tray's "Show current plan..." or `--list`, plus the log. Then add them via the tray's "Exclusions...". (View-only was the default until [0004](0004-active-by-default.md).)

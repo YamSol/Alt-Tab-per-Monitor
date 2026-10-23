@@ -99,12 +99,12 @@ public sealed class PersistenceTests : IDisposable
     }
 
     [Fact]
-    public void Settings_default_to_view_only_with_an_empty_exclusion_list()
+    public void Settings_default_to_active_with_an_empty_exclusion_list()
     {
         var settings = new SettingsStore(_temp.File("settings.json"), _log).Load();
 
         Assert.True(settings.Enabled);
-        Assert.Equal(OperationMode.ViewOnly, settings.Mode);
+        Assert.Equal(OperationMode.Active, settings.Mode);
         Assert.Empty(settings.ExcludedProcesses);
         Assert.True(settings.OwnedFollowsOwner);
         Assert.True(Hotkey.TryParse(settings.EmergencyHotkey, out _));

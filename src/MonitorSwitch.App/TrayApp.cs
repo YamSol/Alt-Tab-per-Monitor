@@ -20,6 +20,7 @@ internal sealed class TrayApp : ApplicationContext
     private readonly NotifyIcon _tray;
     private readonly SynchronizationContext _ui;
     private volatile AppSettings _settings;
+    private ToolStripMenuItem _stateItem = null!;
     private ToolStripMenuItem _enabledItem = null!;
     private ToolStripMenuItem _viewOnlyItem = null!;
     private ToolStripMenuItem _activeItem = null!;
@@ -118,7 +119,8 @@ internal sealed class TrayApp : ApplicationContext
     private ContextMenuStrip BuildMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add(new ToolStripMenuItem("MonitorSwitch") { Enabled = false });
+        _stateItem = new ToolStripMenuItem("MonitorSwitch") { Enabled = false };
+        menu.Items.Add(_stateItem);
         menu.Items.Add(new ToolStripSeparator());
 
         _enabledItem = new ToolStripMenuItem("Enabled", null, (_, _) => Update(_settings with { Enabled = !_settings.Enabled }));
@@ -147,7 +149,12 @@ internal sealed class TrayApp : ApplicationContext
         _activeItem.Checked = _settings.Mode == OperationMode.Active;
         _restoreItem.ShortcutKeyDisplayString = _settings.EmergencyHotkey;
         _verboseItem.Checked = _log.Verbose;
-        var state = !_settings.Enabled ? "disabled" : _settings.Mode == OperationMode.ViewOnly ? "view only" : "active";
+
+        // "Enabled" alone reads as "working" even in view-only mode; spell out the effective state.
+        var state = !_settings.Enabled ? "disabled"
+            : _settings.Mode == OperationMode.ViewOnly ? "view only (not hiding)"
+            : "active";
+        _stateItem.Text = $"MonitorSwitch: {state}";
         _tray.Text = $"MonitorSwitch ({state})";
     }
 

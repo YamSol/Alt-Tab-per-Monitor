@@ -23,7 +23,7 @@ It doesn't replace the switcher. When you press Alt+Tab it briefly hides the win
 - **Safe by design.** A snapshot is written to disk *before* any window is hidden. If the tool crashes, is killed or you log off, the windows come back on the next start, on exit, or with an emergency hotkey.
 - **Per window, not per app.** Dialogs and palettes are judged individually. Modal dialogs, tool windows and windows hidden by their own app are never touched.
 - **Virtual desktop aware.** Only the current desktop is considered.
-- **View-only mode (default).** See what *would* be hidden before letting it hide anything.
+- **View-only mode.** Optionally see what *would* be hidden before letting it hide anything.
 
 > [!NOTE]
 > Windows of elevated (admin) processes cannot be hidden by a non-elevated tool (UIPI); they stay in the switcher. Exclusive full-screen games are out of scope.
@@ -33,9 +33,11 @@ It doesn't replace the switcher. When you press Alt+Tab it briefly hides the win
 1. Download the latest release from the [Releases page](https://github.com/YamSol/Alt-Tab-per-Monitor/releases):
    - `MonitorSwitch-<version>-win-x64.zip`: self-contained, works on any Windows 10 21H2+ / 11 x64.
    - `MonitorSwitch-<version>-win-x64-framework-dependent.zip`: tiny; needs the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0).
-2. Extract and run `MonitorSwitch.exe`. An icon (two small screens) appears in the tray.
-3. Alt+Tab a few times, then open the tray menu → **Show current plan...** to check what would be hidden.
-4. When you are happy with it, choose **Mode → Active**.
+2. Extract and run `MonitorSwitch.exe`. An icon (two small screens) appears in the tray, and it is active right away: Alt+Tab now lists only the windows of the monitor under the cursor.
+3. The first line of the tray menu shows the state (**active**, **view only (not hiding)** or **disabled**).
+
+> [!TIP]
+> Cautious? Choose **Mode → View only** first. Alt+Tab then behaves as usual, and the log and **Show current plan...** show what *would* be hidden. Switch to **Active** when you are happy.
 
 > [!TIP]
 > To start it with Windows, put a shortcut to `MonitorSwitch.exe` in `shell:startup`.
@@ -46,8 +48,9 @@ It doesn't replace the switcher. When you press Alt+Tab it briefly hides the win
 
 | Item | What it does |
 | --- | --- |
+| *First line* | The effective state: **active**, **view only (not hiding)** or **disabled**. |
 | **Enabled** | Turns the tool on or off without exiting. |
-| **Mode** | **View only** logs what would be hidden and changes nothing. **Active** hides and restores. |
+| **Mode** | **Active** (default) hides and restores. **View only** logs what would be hidden and changes nothing. |
 | **Show current plan...** | Every visible window, grouped by monitor, with the rule that decided it. Double-clicking the icon opens this too. |
 | **Exclusions...** | Process names that are never hidden, one per line (e.g. `vlc.exe`). Use this for apps that pause or misbehave when hidden. |
 | **Restore all windows** | Brings back everything the tool hid. Same as the emergency hotkey. |
@@ -82,7 +85,7 @@ MonitorSwitch.exe --restore    # restore windows left hidden by a previous run
 ```jsonc
 {
   "Enabled": true,
-  "Mode": "ViewOnly",                       // or "Active"
+  "Mode": "Active",                         // or "ViewOnly"
   "ExcludedProcesses": [],                  // e.g. ["vlc.exe", "obs64"]
   "EmergencyHotkey": "Ctrl+Alt+Shift+F12",
   "OwnedFollowsOwner": true,                // hide a dialog together with its hidden owner

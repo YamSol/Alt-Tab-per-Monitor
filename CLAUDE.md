@@ -28,7 +28,7 @@ Coverage gate (CI): `build/check-coverage.ps1`. Core ≥ 90% lines, total ≥ 80
 - **Hook thread stays tight**: the `WH_KEYBOARD_LL` callback classifies and posts, nothing else. Slow work there gets the hook silently removed by Windows.
 - **Async toward other processes**: `ShowWindowAsync`, `SWP_ASYNCWINDOWPOS`. A hung app must never block the tool.
 - **Privacy**: logs and `state.json` hold handles and process names, never titles or keys.
-- **View-only is the default mode**; every change must keep it touching zero windows (criterion 9).
+- **View-only touches zero windows** (criterion 9), whatever else changes. Active is the default ([decision 0004](docs/decisions/0004-active-by-default.md)). Anything that launches the real tray on a developer machine (tests, smoke script) writes `"Mode": "ViewOnly"` into its own `--data-dir` first.
 
 ## Gotchas learned the hard way
 
