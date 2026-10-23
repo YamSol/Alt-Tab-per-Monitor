@@ -72,13 +72,17 @@ jobs:
             TestResults/**/*.trx
             coverage/
 
-      # Same flavour as the release download: single-file, self-contained, compressed, ReadyToRun.
+      # Both release flavours, exactly as the release workflow builds them.
       - name: Publish (smoke)
-        run: dotnet publish src/MonitorSwitch.App -c Release -r win-x64 --self-contained true -o publish
+        run: |
+          dotnet publish src/MonitorSwitch.App -c Release -r win-x64 --self-contained true  -o publish
+          dotnet publish src/MonitorSwitch.App -c Release -r win-x64 --self-contained false -o publish-fd
 
       - name: Tray smoke test
         shell: pwsh
-        run: ./build/smoke-tray.ps1 -Exe publish/MonitorSwitch.exe
+        run: |
+          ./build/smoke-tray.ps1 -Exe publish/MonitorSwitch.exe
+          ./build/smoke-tray.ps1 -Exe publish-fd/MonitorSwitch.exe
 
       # MonitorSwitch.exe is a GUI-subsystem exe, so PowerShell would not wait for it on its own.
       - name: CLI smoke test

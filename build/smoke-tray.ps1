@@ -32,7 +32,14 @@ try {
     Start-Sleep -Seconds 2
     if (Test-Path $log) { Get-Content $log }
 
-    if ($process.HasExited) { throw "MonitorSwitch exited during startup with code $($process.ExitCode)." }
+    if ($process.HasExited) {
+        # A crash before the first log line (runtime/host level) only shows up in the event log.
+        Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-5) } -ErrorAction SilentlyContinue |
+            Where-Object { $_.ProviderName -in '.NET Runtime', 'Application Error', 'Windows Error Reporting' } |
+            Select-Object -First 5 |
+            ForEach-Object { "---- $($_.TimeCreated) $($_.ProviderName) $($_.Id)"; $_.Message }
+        throw "MonitorSwitch exited during startup with code $($process.ExitCode) (0x$('{0:X8}' -f $process.ExitCode))."
+    }
     if (-not (Select-String -Path $log -Pattern 'INFO Ready in' -Quiet)) { throw "MonitorSwitch did not become ready within $TimeoutSeconds s." }
     if (Select-String -Path $log -Pattern ' ERROR ' -Quiet) { throw 'MonitorSwitch logged an error during startup.' }
     Write-Host 'Tray smoke test passed.'
