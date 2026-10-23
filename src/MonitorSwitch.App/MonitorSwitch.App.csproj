@@ -26,7 +26,8 @@
   -->
   <PropertyGroup Condition="'$(SelfContained)' == 'true'">
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)\self-contained\</IntermediateOutputPath>
-    <OutputPath>$(BaseOutputPath)$(Configuration)\self-contained\</OutputPath>
+    <!-- BaseOutputPath is not defined yet at this point, unlike BaseIntermediateOutputPath. -->
+    <OutputPath>bin\$(Configuration)\self-contained\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
